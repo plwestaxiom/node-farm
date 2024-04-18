@@ -1,0 +1,32 @@
+# dependencies
+/node_modules
+
+# testing
+/coverage
+
+# environment variables
+.env
+
+# IDE files
+.vscode/
+*.code-workspace
+
+# npm debugging logs
+npm-debug.log*
+
+# yarn logs
+yarn-debug.log*
+yarn-error.log*
+
+# local cache
+/.pnp
+.pnp.js
+
+# production build
+/build
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
