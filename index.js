@@ -25,19 +25,64 @@ const url = require('url');
 // SERVER
 
 const PORT = 3500;
+const data = fs.readFileSync(path.join(__dirname, 'dev-data', 'data.json'), 'utf-8');
+const productDataObj = JSON.parse(data);
+
+const replaceTemplate = (template, product) => {
+  let output = template.replace(/{%PRODUCTNAME%}/g, product.productName);
+  output = output.replace(/{%IMAGE%}/g, product.image);
+  output = output.replace(/{%PRICE%}/g, product.price);
+  output = output.replace(/{%FROM%}/g, product.from);
+  output = output.replace(/{%NUTRIENTS%}/g, product.nutrients);
+  output = output.replace(/{%QUANTITY%}/g, product.quantity);
+  output = output.replace(/{%DESCRIPTION%}/g, product.description);
+  output = output.replace(/{%ID%}/g, product.id);
+
+  if (!product.organic) {
+    output = output.replace(/{%NOT_ORGANIC%}/g, 'not-organic');
+  }
+  return output;
+}
+
+const templateOverview = fs.readFileSync(path.join(__dirname, 'templates', 'template-overview.html'), 'utf-8');
+const templateProduct = fs.readFileSync(path.join(__dirname, 'templates', 'template-product.html'), 'utf-8');
+const templateCard = fs.readFileSync(path.join(__dirname, 'templates', 'template-card.html'), 'utf-8');
+
 
 const server = http.createServer((req, res) => {
-  console.log(req.url);
+
+  const { query, pathname } = url.parse(req.url, true);
 
   switch (req.url) {
+    // OVERVIEW PAGE
     case '/':
     case '/overview':
-      res.end("This is the OVERVIEW")
+      res.writeHead(200, { 'Content-type': 'text/html' });
+
+      const cardsHtml = productDataObj.map(product => replaceTemplate(templateCard, product)).join('');
+      const overviewOutput = templateOverview.replace('{%PRODUCT_CARDS%}', cardsHtml);
+
+      res.end(overviewOutput)
       break;
+
+    // PRODUCT PAGE
+    case `/product?id=${query.id}`:
+      res.writeHead(200, { 'Content-type': 'text/html' });
+      const product = productDataObj[query.id];
+      const productOutput = replaceTemplate(templateProduct, product);
+
+      res.end(productOutput);
+      break;
+
+    // API
+    case '/api':
+      res.writeHead(200, { 'Content-type': 'application/json' });
+      res.end(data);
+      break;
+
+    // DEFAULT NOT FOUND
     default:
-      res.writeHead(404, {
-        'Content-type': 'text/html'
-      });
+      res.writeHead(404, { 'Content-type': 'text/html' });
       res.end('<h1>Page not found!</h1>')
       break;
   }
