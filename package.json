@@ -1,16 +1,28 @@
 {
-  "name": "farm",
+  "name": "node-farm",
   "version": "1.0.0",
-  "description": "",
+  "description": "Learning NodeJS",
   "main": "index.js",
   "scripts": {
+    "prettier-watch": "onchange \"**/*\" -- prettier --write --ignore-unknown {{changed}}",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "start:dev": "nodemon index.js"
   },
   "author": "Paul L. West",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/plwestaxiom/node-farm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/plwestaxiom/node-farm/issues"
+  },
+  "homepage": "https://github.com/plwestaxiom/node-farm#readme",
+  "dependencies": {
+    "slugify": "^1.6.6"
+  },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "prettier": "^3.2.5"
   }
 }

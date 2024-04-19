@@ -2,13 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const url = require('url');
+
+const slugify = require('slugify');
+
 const { replaceTemplate } = require('./modules/replace-template');
 
-
-
-
 // const inputFilePath = path.join(__dirname, 'txt', 'input.txt')
-
 // // blocking code
 // try {
 //   const data = fs.readFileSync(inputFilePath, 'utf8');
@@ -26,35 +25,57 @@ const { replaceTemplate } = require('./modules/replace-template');
 // SERVER
 
 const PORT = 3500;
-const data = fs.readFileSync(path.join(__dirname, 'dev-data', 'data.json'), 'utf-8');
+const data = fs.readFileSync(
+  path.join(__dirname, 'dev-data', 'data.json'),
+  'utf-8',
+);
 const productDataObj = JSON.parse(data);
-const templateOverview = fs.readFileSync(path.join(__dirname, 'templates', 'template-overview.html'), 'utf-8');
-const templateProduct = fs.readFileSync(path.join(__dirname, 'templates', 'template-product.html'), 'utf-8');
-const templateCard = fs.readFileSync(path.join(__dirname, 'templates', 'template-card.html'), 'utf-8');
+const templateOverview = fs.readFileSync(
+  path.join(__dirname, 'templates', 'template-overview.html'),
+  'utf-8',
+);
+const templateProduct = fs.readFileSync(
+  path.join(__dirname, 'templates', 'template-product.html'),
+  'utf-8',
+);
+const templateCard = fs.readFileSync(
+  path.join(__dirname, 'templates', 'template-card.html'),
+  'utf-8',
+);
 
+const slugs = productDataObj.map((product) =>
+  slugify(product.productName, { lower: true }),
+);
+console.log(slugs);
 
 const server = http.createServer((req, res) => {
+  const parsedUrl = req.url.replace(new RegExp(`${slugs.join('|')}`, 'gi'), '');
 
-  const { query, pathname } = url.parse(req.url, true);
-
-  switch (req.url) {
+  switch (parsedUrl) {
     // OVERVIEW PAGE
     case '/':
     case '/overview':
+      const cardsHtml = productDataObj
+        .map((product) => replaceTemplate(templateCard, product))
+        .join('');
+      const overviewOutput = templateOverview.replace(
+        '{%PRODUCT_CARDS%}',
+        cardsHtml,
+      );
+
       res.writeHead(200, { 'Content-type': 'text/html' });
-
-      const cardsHtml = productDataObj.map(product => replaceTemplate(templateCard, product)).join('');
-      const overviewOutput = templateOverview.replace('{%PRODUCT_CARDS%}', cardsHtml);
-
-      res.end(overviewOutput)
+      res.end(overviewOutput);
       break;
 
     // PRODUCT PAGE
-    case `/product?id=${query.id}`:
-      res.writeHead(200, { 'Content-type': 'text/html' });
-      const product = productDataObj[query.id];
+    case `/product/`:
+      const slug = req.url.replace(new RegExp(`/product/`, 'gi'), '');
+      const product = productDataObj.find(
+        (product) => slugify(product.productName, { lower: true }) === slug,
+      );
       const productOutput = replaceTemplate(templateProduct, product);
 
+      res.writeHead(200, { 'Content-type': 'text/html' });
       res.end(productOutput);
       break;
 
@@ -67,14 +88,11 @@ const server = http.createServer((req, res) => {
     // DEFAULT NOT FOUND
     default:
       res.writeHead(404, { 'Content-type': 'text/html' });
-      res.end('<h1>Page not found!</h1>')
+      res.end('<h1>Page not found!</h1>');
       break;
   }
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Server listening on port ${PORT}`)
+  console.log(`Server listening on port ${PORT}`);
 });
-
-
-
